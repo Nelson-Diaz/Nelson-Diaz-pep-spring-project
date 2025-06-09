@@ -1,5 +1,24 @@
 package com.example.controller;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.entity.Account;
+import com.example.entity.Message;
+import com.example.exception.ClientErrorException;
+import com.example.exception.UnauthorizedException;
+import com.example.exception.UserExistsException;
+import com.example.service.AccountService;
+import com.example.service.MessageService;
 
 /**
  * TODO: You will need to write your own endpoints and handlers for your controller using Spring. The endpoints you will need can be
@@ -7,6 +26,56 @@ package com.example.controller;
  * where applicable as well as the @ResponseBody and @PathVariable annotations. You should
  * refer to prior mini-project labs and lecture materials for guidance on how a controller may be built.
  */
+@RestController
 public class SocialMediaController {
+
+    private final AccountService accountService;
+    private final MessageService messageService;
+
+    public SocialMediaController(AccountService accountService, MessageService messageService) {
+        this.accountService = accountService;
+        this.messageService = messageService;
+    }
+
+    @PostMapping("register")
+    public Account createAccount(@RequestBody Account newAccount) throws ClientErrorException, UserExistsException {
+        return accountService.createAccount(newAccount);
+    }
+
+    @PostMapping("login")
+    public Account login(@RequestBody Account account) throws UnauthorizedException {
+        return accountService.login(account);
+    }
+
+    @PostMapping("messages")
+    public Message createMessage(@RequestBody Message newMessage) throws ClientErrorException {
+        return messageService.createMessage(newMessage);
+    }
+
+    @GetMapping("messages")
+    public List<Message> getAllMessages() {
+        return messageService.getAllMessages();
+    }
+
+    @GetMapping("messages/{messageId}")
+    public Message getMessage(@PathVariable int messageId) {
+        return messageService.getMessage(messageId);
+    }
+
+    @DeleteMapping("messages/{messageId}")
+    public Integer deleteMessage(@PathVariable int messageId) {
+        int rowsUpdated = messageService.deleteMessage(messageId);
+        return (rowsUpdated == 0) ? null : rowsUpdated;
+    }
+
+    @PatchMapping("messages/{messageId}")
+    public Integer updateMessage(@RequestBody Message updatedMessage, @PathVariable int messageId) throws ClientErrorException {
+        return messageService.updateMessage(messageId, updatedMessage.getMessageText());
+    }
+
+    @GetMapping("accounts/{accountId}/messages")
+    public List<Message> getAccountMessages(@PathVariable int accountId) {
+        return messageService.getAccountMessages(accountId);
+    }
 
 }
