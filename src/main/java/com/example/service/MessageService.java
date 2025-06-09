@@ -1,6 +1,9 @@
 package com.example.service;
 
 import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
 
 import com.example.entity.Account;
 import com.example.entity.Message;
@@ -8,6 +11,7 @@ import com.example.exception.ClientErrorException;
 import com.example.repository.AccountRepository;
 import com.example.repository.MessageRepository;
 
+@Service
 public class MessageService {
 
     private final MessageRepository messageRepository;
@@ -18,42 +22,53 @@ public class MessageService {
         this.accountRepository = accountRepository;
     }
 
-    public Message createMessage(Message newMessage) throws ClientErrorException {
+    public Message createMessage(Message newMessage) {
         int messageLength = newMessage.getMessageText().length();
         boolean validMessageText = (0 < messageLength) && (messageLength <= 255);
 
-        Account foundUser = accountRepository.getAccountById(newMessage.getPostedBy());
+        Optional<Account> foundUser = accountRepository.findById(newMessage.getPostedBy());
 
-        if(!validMessageText || (foundUser == null)) {
+        if(!validMessageText || foundUser.isEmpty()) {
             throw new ClientErrorException();
         }
 
-        return messageRepository.insertMessage(newMessage);
+        return messageRepository.save(newMessage);
     }
 
     public List<Message> getAllMessages() {
-        return messageRepository.getAllMessages();
+        return messageRepository.findAll();
     }
 
     public Message getMessage(int messageId) {
-        return messageRepository.getMessageById(messageId);
+        Optional<Message> foundMessage = messageRepository.findById(messageId);
+        return foundMessage.isPresent() ? foundMessage.get() : null;
     }
 
-    public int deleteMessage(int messageId) {
-        return messageRepository.deleteMessage(messageId);
+    public boolean deleteMessage(int messageId) {
+        Optional<Message> foundMessage = messageRepository.findById(messageId);
+        if(foundMessage.isPresent()) {
+            messageRepository.deleteById(messageId);
+        }
+        return foundMessage.isPresent();
     }
 
-    public int updateMessage(int messageId, String messageText) throws ClientErrorException {
-        int rowsUpdated = messageRepository.updatedMessageText(messageId, messageText);
+    public int updateMessage(int messageId, String messageText) {
+        boolean messageTextValid = (0 < messageText.length()) && (messageText.length() <= 255);
 
-        if(rowsUpdated == 0) {
+        Optional<Message> foundMessage = messageRepository.findById(messageId);
+        if(foundMessage.isEmpty() || !messageTextValid) {
             throw new ClientErrorException();
         }
 
-        return rowsUpdated;
+        Message foundMessageObj = foundMessage.get();
+
+        foundMessageObj.setMessageText(messageText);
+        messageRepository.save(foundMessageObj);
+
+        return 1;
     }
 
     public List<Message> getAccountMessages(int accountId) {
-        return messageRepository.getAllMessagesByAccountId(accountId);
+        return messageRepository.findAllByPostedBy(accountId);
     }
 }

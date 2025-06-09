@@ -1,12 +1,16 @@
 package com.example.repository;
 
+import java.util.Optional;
+
+import org.springframework.data.repository.CrudRepository;
+
 import com.example.entity.Account;
 
-public interface AccountRepository {
+public interface AccountRepository extends CrudRepository<Account, Integer> {
 
-    Account getAccountByUsername(String username);
+    Optional<Account> findByUsername(String username);
 
-    Account insertAccount(Account newAccount);
+    Account save(Account newAccount);
 
-    Account getAccountById(int postedBy);
+    Optional<Account> findById(int postedBy);
 }

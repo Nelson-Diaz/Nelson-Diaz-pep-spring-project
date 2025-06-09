@@ -1,5 +1,7 @@
 package com.example.service;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
 import com.example.entity.Account;
@@ -17,12 +19,12 @@ public class AccountService {
         this.accountRepository = accountRepository;
     }
 
-    public Account createAccount(Account newAccount) throws ClientErrorException, UserExistsException {
+    public Account createAccount(Account newAccount) {
         boolean validUsername = newAccount.getUsername().length() > 0;
         boolean validPassword = newAccount.getPassword().length() >= 4;
 
-        Account existingAccount = accountRepository.getAccountByUsername(newAccount.getUsername());
-        if(existingAccount == null) {
+        Optional<Account> existingAccount = accountRepository.findByUsername(newAccount.getUsername());
+        if(existingAccount.isPresent()) {
             throw new UserExistsException();
         }
 
@@ -30,16 +32,20 @@ public class AccountService {
             throw new ClientErrorException();
         } 
 
-        return accountRepository.insertAccount(newAccount);
+        return accountRepository.save(newAccount);
     }
 
-    public Account login(Account account) throws UnauthorizedException {
-        Account foundAccount = accountRepository.getAccountByUsername(account.getUsername());
-
-        if(!foundAccount.getPassword().equals(account.getPassword())) {
+    public Account login(Account account) {
+        Optional<Account> foundAccount = accountRepository.findByUsername(account.getUsername());
+        if(foundAccount.isEmpty()) {
             throw new UnauthorizedException();
         }
 
-        return foundAccount;
+        //Given password does not match password of found account
+        if(!foundAccount.get().getPassword().equals(account.getPassword())) {
+            throw new UnauthorizedException();
+        }
+
+        return foundAccount.get();
     }
 }

@@ -1,20 +1,21 @@
 package com.example.repository;
 
 import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.repository.CrudRepository;
 
 import com.example.entity.Message;
 
-public interface MessageRepository {
+public interface MessageRepository extends CrudRepository<Message, Integer> {
 
-    Message insertMessage(Message newMessage);
+    Message save(Message newMessage);
 
-    List<Message> getAllMessages();
+    List<Message> findAll();
 
-    Message getMessageById(int messageId);
+    Optional<Message> findById(int messageId);
 
-    int deleteMessage(int messageId);
+    void deleteById(int messageId);
 
-    int updatedMessageText(int messageId, String messageText);
-
-    List<Message> getAllMessagesByAccountId(int accountId);
+    List<Message> findAllByPostedBy(int postedBy);
 }
